@@ -43,4 +43,38 @@ FROM ranked_sales
 WHERE rank <= 10
 ORDER BY year, month;
 
+Penjelasan:
+WITH: memulai CTE atau Common Table Expression. CTE digunakan untuk mengelompokkan data terlebih dahulu, dalam hal ini year,
+month, name, brand, category, departemen. Kemudian, dilanjutkan dengan CTE kedua 'ranked_sales' untuk membuat ranking
+berdasarkan total sales yang didapat dari SUM(sale_price).
 
+SELECT: digunakan untuk memilih kolom-kolom yang mau digunakan. 
+
+EXTRACT: mengektraksi YEAR (untuk tahun) dan MONTH (untuk bulan) dari suatu tabel dengan tipe data timestamp atau datetime.
+FROM `bigquery-public-data.thelook_ecommerce.order_items`: mengakses kolom atau data dari tabel order_items dari dataset
+thelook_ecommerce yang merupakan bagian dari BigQuery Public Data. 
+
+LEFT JOIN `next-da-ecommerce-b2b.thelook_ecommerce.product_new`: menggabungkan tabel product_new dengan tabel order_items.
+Tabel product_new sendiri merupakan tabel dari dataset thelook_ecommerce yang merupakan bagian dari project pribadi. 
+Tabel product_new merupakan tabel baru yang dibuat secara mandiri untuk dapat men-join kedua tabel di atas sehingga memiliki
+primary key yang sama, yaitu product_id. Tabel product dari BigQuery Public Data hanya menyediakan kolom 'id', yang sejalan
+dengan 'product_id' pada tabel order items.
+
+ON trans.product_id = prod.product_id: syarat untuk dapat men-join dua tabel adalah dengan menyamakan primary key.
+
+AS: untuk memberikan alias.
+
+WHERE status = "Complete" OR status = "Shipped": mengquery data di mana statusnya harus bertuliskan Complete dan Shipped.
+Hanya Complete dan Shipped untuk menghitung penjualan bulanan yang benar-benar sudah didapat e-commerce, sehingga sale_price
+untuk yang berstatus cancelled, processing, dan refund tidak diikutkan dalam penghitungan penjualan.
+
+GROUP BY: mengelompokkan berdasarkan kolom tertentu, dalam hal ini year, month, name, brand, category, department.
+
+ROW_NUMBER() OVER (PARTITION BY ... ORDER BY ...): memberikan nomor urut berdasarkan urutan tertentu. Dalam hal ini, data
+dipisahkan terlebih dahulu menurut year dan month-nya. Kemudian diurutkan berdasarkan penjualan tertinggi (sehingga
+menggunakan syntax DESC), lalu diurutkan.
+
+WHERE rank <= 10: mengquery data untuk rank 10 besar, dengan kriteria produk dengan penjualan tertinggi pada bulan 
+dan tahun tertentu.
+
+ORDER BY year, month: mengurutkan data berdasarkan year dan month.
