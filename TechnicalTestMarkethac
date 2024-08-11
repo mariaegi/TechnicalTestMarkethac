@@ -1,0 +1,46 @@
+WITH report_monthly_orders_product_agg AS (
+  SELECT 
+    EXTRACT(YEAR FROM created_at) AS year, 
+    EXTRACT(MONTH FROM created_at) AS month,
+    name,
+    brand,
+    category,
+    department,
+    COUNT(trans.product_id) AS number_of_product,
+    SUM(sale_price) AS sales
+  FROM `bigquery-public-data.thelook_ecommerce.order_items` AS trans
+  LEFT JOIN `next-da-ecommerce-b2b.thelook_ecommerce.product_new` AS prod
+    ON trans.product_id = prod.product_id
+  WHERE status = "Complete" OR status = "Shipped"
+  GROUP BY year, month, name, brand, category, department
+),
+ranked_sales AS (
+  SELECT
+    year,
+    month,
+    name,
+    brand,
+    category,
+    department,
+    number_of_product,
+    sales,
+    ROW_NUMBER() OVER (
+      PARTITION BY year, month
+      ORDER BY sales DESC
+    ) AS rank
+  FROM report_monthly_orders_product_agg
+)
+SELECT 
+  year,
+  month,
+  name,
+  brand,
+  category,
+  department,
+  number_of_product,
+  sales
+FROM ranked_sales
+WHERE rank <= 10
+ORDER BY year, month;
+
+
